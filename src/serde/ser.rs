@@ -8,9 +8,14 @@ use serde::ser::{self, Impossible, Serialize};
 use super::error::{Error, Result};
 
 pub fn to_string<T: Serialize>(input: &T) -> Result<String> {
+    let buff = to_bytes(input)?;
+    Ok(hex::encode_upper(buff.as_slice()))
+}
+
+pub fn to_bytes<T: Serialize>(input: &T) -> Result<Vec<u8>> {
     let mut buff = Vec::new();
     input.serialize(&mut Serializer { writer: &mut buff })?;
-    Ok(hex::encode_upper(buff.as_slice()))
+    Ok(buff)
 }
 
 pub struct Serializer<W: Write> {

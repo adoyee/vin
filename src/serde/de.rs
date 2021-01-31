@@ -3,15 +3,17 @@ use std::io::Read;
 use byteorder::{BigEndian, ReadBytesExt};
 use encoding::all::GBK;
 use encoding::{DecoderTrap, Encoding};
-use serde::de;
+use serde::{de, Deserialize};
 
 use crate::serde::error::{Error, Result};
 
 pub fn from_str<'de, T: de::Deserialize<'de>>(s: &str) -> Result<T> {
     let buff = hex::decode(s).map_err(Error::from)?;
-    let mut deserializer = Deserializer {
-        reader: buff.as_slice(),
-    };
+    from_bytes(buff.as_slice())
+}
+
+pub fn from_bytes<'de, T: Deserialize<'de>>(buff: &[u8]) -> Result<T> {
+    let mut deserializer = Deserializer { reader: buff };
     T::deserialize(&mut deserializer)
 }
 

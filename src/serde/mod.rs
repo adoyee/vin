@@ -1,6 +1,7 @@
-pub use de::from_str;
-pub use ser::to_string;
+pub use de::{from_str, Deserializer};
+pub use error::{Error, Result};
+pub use ser::{to_string, Serializer};
 
 mod de;
-pub mod error;
+mod error;
 mod ser;
