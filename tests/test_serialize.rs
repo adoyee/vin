@@ -1,6 +1,7 @@
 extern crate vin;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use vin::packet::body::Body;
 use vin::packet::types::Time;
@@ -44,4 +45,44 @@ fn serialize_struct_a() {
     let msg = vin::to_string(&packet).unwrap();
     println!("{}", msg)
 }
-// 2323010076696E0000000003007B15010201010104D23132333435363749434349440000007375627379732D736E00FF
+
+#[test]
+fn de_enum_8() {
+    #[derive(Debug, Serialize_repr, Deserialize_repr, Eq, PartialEq)]
+    #[repr(u16)]
+    enum EnumA {
+        A = 1,
+        B = 2,
+    }
+    let a = EnumA::B;
+    let ser = vin::to_string(&a).unwrap();
+    let de: EnumA = vin::from_str(ser.as_str()).unwrap();
+    assert_eq!(de, a)
+}
+
+#[test]
+fn de_string() {
+    let msg = String::from("hello world 你们好");
+    let ser = vin::to_string(&msg).unwrap();
+    let de: String = vin::from_str(ser.as_str()).unwrap();
+    assert_eq!(msg, de)
+}
+
+#[test]
+fn de_struct() {
+    #[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
+    struct StructA {
+        a: u32,
+        b: u16,
+        msg: String,
+    }
+
+    let a = StructA {
+        a: 1,
+        b: 2,
+        msg: String::from("hello world"),
+    };
+    let ser = vin::to_string(&a).unwrap();
+    let de: StructA = vin::from_str(ser.as_str()).unwrap();
+    assert_eq!(de, a)
+}

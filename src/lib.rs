@@ -1,3 +1,4 @@
+pub use crate::serde::from_str;
 pub use crate::serde::to_string;
 
 #[cfg(test)]

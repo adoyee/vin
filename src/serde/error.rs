@@ -19,8 +19,12 @@ pub enum Error {
 
     #[error(transparent)]
     FromUtf8(#[from] string::FromUtf8Error),
+
     #[error("GBK decode/encode")]
     GBK,
+
+    #[error(transparent)]
+    HexString(#[from] hex::FromHexError),
 }
 
 impl ser::Error for Error {
