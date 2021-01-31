@@ -40,7 +40,6 @@ impl<R: Read> Deserializer<R> {
                 ret.push(d)
             }
         }
-        println!("gbk len:{}", ret.len());
         Ok(ret)
     }
 }
