@@ -123,6 +123,31 @@ where
     where
         D: ::serde::de::Deserializer<'de> + Sized,
     {
+        struct GBKStringVisitor<L> {
+            _marker: std::marker::PhantomData<L>,
+        };
+
+        impl<'de, L> ::serde::de::Visitor<'de> for GBKStringVisitor<L>
+        where
+            L: LengthTrait,
+        {
+            type Value = StringBuffer<L>;
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct Duration")
+            }
+            fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+                where
+                    E: Error,
+            {
+                let _ = v;
+                // Err(Error::invalid_type(Unexpected::Bytes(v), &self))
+            }
+        }
+
+        let len = StringBuffer::<L>::LENGTH;
+        let mut buff = Vec::with_capacity(len);
+        buff.resize(len, 0);
+        deserializer.deserialize_bytes()
         let s = StringBuffer::new();
         println!("{}", StringBuffer::<L>::LENGTH);
         Ok(s)
