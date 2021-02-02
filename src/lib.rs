@@ -11,4 +11,4 @@ mod tests {
 
 pub mod packet;
 mod parser;
-mod serde;
+pub mod serde;

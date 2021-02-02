@@ -9,7 +9,9 @@ byteorder = "1.4.2"
 encoding = "0.2.33"
 hex = "0.4.2"
 serde = { version = "1.0.123", features = ["derive"] }
+serde_bytes = "0.11.5"
 serde_repr = "0.1.6"
+serde_with = "1.6.1"
 thiserror = "1.0.23"
 [dev-dependencies]
 serde_test = "1.0.123"

@@ -3,9 +3,12 @@ use encoding::all::GB18030;
 use encoding::{EncoderTrap, Encoding};
 pub use error::{Error, Result};
 pub use ser::{to_string, Serializer};
+use serde::de::value::BytesDeserializer;
+use serde::de::Unexpected::Bytes;
 
 mod de;
 mod error;
+pub mod gbk;
 mod ser;
 
 pub struct GBKString {
@@ -22,42 +25,6 @@ impl GBKString {
     }
 }
 
-impl ::serde::Serialize for GBKString {
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: ::serde::ser::Serializer,
-    {
-        let gbk = GB18030.encode(self.string().as_str(), EncoderTrap::Strict);
-        if gbk.is_err() {
-            return Err(::serde::ser::Error::custom("gbk encode"));
-        }
-        let mut gbk = gbk.unwrap();
-        if gbk.len() > GBKString::LENGTH {
-            return Err(::serde::ser::Error::custom("GB18030 too large"));
-        }
-
-        if gbk.is_empty() {
-            return serializer.serialize_u8(0);
-        }
-
-        gbk.resize(GBKString::LENGTH, 0);
-        serializer.serialize_bytes(gbk.as_slice())
-    }
-}
-
-impl<'de> ::serde::Deserialize<'de> for GBKString {
-    fn deserialize<D>(deserializer: D) -> std::result::Result<GBKString, D::Error>
-    where
-        D: ::serde::de::Deserializer<'de> + Sized,
-    {
-        let mut buff = Vec::with_capacity(GBKString::LENGTH);
-        buff.resize(GBKString::LENGTH, 0);
-        let s = GBKString {
-            message: String::from_utf8(buff).unwrap_or_default(),
-        };
-        Ok(s)
-    }
-}
 //
 // struct GBKBuff {
 //     data: [u8],
@@ -112,45 +79,6 @@ where
 
     pub fn length(self) -> usize {
         T::LENGTH
-    }
-}
-
-impl<'de, L> ::serde::Deserialize<'de> for StringBuffer<L>
-where
-    L: LengthTrait,
-{
-    fn deserialize<D>(deserializer: D) -> std::result::Result<StringBuffer<L>, D::Error>
-    where
-        D: ::serde::de::Deserializer<'de> + Sized,
-    {
-        struct GBKStringVisitor<L> {
-            _marker: std::marker::PhantomData<L>,
-        };
-
-        impl<'de, L> ::serde::de::Visitor<'de> for GBKStringVisitor<L>
-        where
-            L: LengthTrait,
-        {
-            type Value = StringBuffer<L>;
-            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                formatter.write_str("struct Duration")
-            }
-            fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
-                where
-                    E: Error,
-            {
-                let _ = v;
-                // Err(Error::invalid_type(Unexpected::Bytes(v), &self))
-            }
-        }
-
-        let len = StringBuffer::<L>::LENGTH;
-        let mut buff = Vec::with_capacity(len);
-        buff.resize(len, 0);
-        deserializer.deserialize_bytes()
-        let s = StringBuffer::new();
-        println!("{}", StringBuffer::<L>::LENGTH);
-        Ok(s)
     }
 }
 

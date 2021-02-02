@@ -1,11 +1,13 @@
 use std::io::Read;
 
+use crate::serde::gbk;
 use byteorder::{BigEndian, ReadBytesExt};
 use encoding::all::GBK;
 use encoding::{DecoderTrap, Encoding};
 use serde::{de, Deserialize};
 
 use crate::serde::error::{Error, Result};
+use serde::de::DeserializeSeed;
 
 pub fn from_str<'de, T: de::Deserialize<'de>>(s: &str) -> Result<T> {
     let buff = hex::decode(s).map_err(Error::from)?;
@@ -103,6 +105,14 @@ impl<'de, 'a, R: Read> de::Deserializer<'de> for &'a mut Deserializer<R> {
         visitor.visit_string(gbk)
     }
 
+    fn deserialize_bytes<V: de::Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
+        self.deserialize_string(visitor)
+    }
+
+    fn deserialize_byte_buf<V: de::Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
+        self.deserialize_string(visitor)
+    }
+
     fn deserialize_option<V>(self, visitor: V) -> Result<V::Value>
     where
         V: serde::de::Visitor<'de>,
@@ -113,6 +123,14 @@ impl<'de, 'a, R: Read> de::Deserializer<'de> for &'a mut Deserializer<R> {
             1 => visitor.visit_some(&mut *self),
             _ => Err(Error::Unsupported),
         }
+    }
+
+    fn deserialize_seq<V>(self, visitor: V) -> Result<V::Value>
+    where
+        V: serde::de::Visitor<'de>,
+    {
+        let seq_access = SeqAccess::new(&mut *self);
+        visitor.visit_seq(seq_access)
     }
 
     fn deserialize_tuple<V>(self, len: usize, visitor: V) -> Result<V::Value>
@@ -202,10 +220,8 @@ impl<'de, 'a, R: Read> de::Deserializer<'de> for &'a mut Deserializer<R> {
     deserialize_unsupported!(deserialize_f64);
     deserialize_unsupported!(deserialize_bool);
     deserialize_unsupported!(deserialize_char);
-    deserialize_unsupported!(deserialize_bytes);
-    deserialize_unsupported!(deserialize_byte_buf);
     deserialize_unsupported!(deserialize_unit);
-    deserialize_unsupported!(deserialize_seq);
+    // deserialize_unsupported!(deserialize_seq);
     deserialize_unsupported!(deserialize_map);
     deserialize_unsupported!(deserialize_ignored_any);
     deserialize_unsupported!(deserialize_identifier);
@@ -244,5 +260,28 @@ where
         V: serde::de::Visitor<'de>,
     {
         serde::de::Deserializer::deserialize_tuple(self, fields.len(), visitor)
+    }
+}
+
+struct SeqAccess<'a, R: 'a + Read> {
+    de: &'a mut Deserializer<R>,
+}
+
+impl<'a, R: 'a + Read> SeqAccess<'a, R> {
+    pub fn new(de: &'a mut Deserializer<R>) -> Self {
+        Self { de }
+    }
+}
+
+impl<'a, 'de, R: 'a + Read> serde::de::SeqAccess<'de> for SeqAccess<'a, R> {
+    type Error = Error;
+    fn next_element_seed<T: de::DeserializeSeed<'de>>(
+        &mut self,
+        seed: T,
+    ) -> Result<Option<T::Value>>
+    where
+        T: de::DeserializeSeed<'de>,
+    {
+        seed.deserialize(&mut *self.de).map(Some)
     }
 }

@@ -1,5 +1,6 @@
 use std::io::Write;
 
+use crate::serde::gbk;
 use byteorder::{BigEndian, WriteBytesExt};
 use encoding::all::GBK;
 use encoding::{EncoderTrap, Encoding};
@@ -20,6 +21,24 @@ pub fn to_bytes<T: Serialize>(input: &T) -> Result<Vec<u8>> {
 
 pub struct Serializer<W: Write> {
     writer: W,
+}
+
+impl<W: Write> Serializer<W> {
+    pub fn serialize_gbk_string<O: gbk::Options>(
+        &mut self,
+        message: &gbk::GBKString<O>,
+    ) -> Result<()> {
+        let mut buff = GBK
+            .encode(message.message.as_str(), EncoderTrap::Strict)
+            .map_err(|_| Error::GBK)?;
+
+        if buff.len() > O::LENGTH {
+            return Err(Error::GbkTooLarge);
+        }
+
+        buff.resize(O::LENGTH, 0);
+        self.writer.write_all(buff.as_slice()).map_err(Error::from)
+    }
 }
 
 impl<'a, W: Write> ser::Serializer for &'a mut Serializer<W> {
@@ -94,8 +113,9 @@ impl<'a, W: Write> ser::Serializer for &'a mut Serializer<W> {
         Ok(())
     }
 
-    fn serialize_bytes(self, _: &[u8]) -> Result<()> {
-        Err(Error::Unsupported)
+    fn serialize_bytes(self, v: &[u8]) -> Result<()> {
+        self.writer.write_all(v)?;
+        Ok(())
     }
 
     fn serialize_none(self) -> Result<()> {

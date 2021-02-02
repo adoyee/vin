@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::fmt::Display;
 use std::{io, str, string};
 
@@ -22,6 +23,9 @@ pub enum Error {
 
     #[error("GBK decode/encode")]
     GBK,
+
+    #[error("GBK string too large")]
+    GbkTooLarge,
 
     #[error(transparent)]
     HexString(#[from] hex::FromHexError),

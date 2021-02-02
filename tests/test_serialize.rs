@@ -69,20 +69,24 @@ fn de_string() {
 }
 
 #[test]
-fn de_struct() {
-    #[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
-    struct StructA {
-        a: u32,
-        b: u16,
-        msg: String,
+fn test_gbk_string() {
+    #[derive(Debug, Eq, PartialEq)]
+    struct Opt {}
+    impl vin::serde::gbk::Options for Opt {
+        const LENGTH: usize = 20;
+    }
+    type S20 = vin::serde::gbk::GBKString<Opt>;
+
+    #[derive(Serialize, Deserialize, Debug)]
+    struct MyStruct {
+        s20: S20,
     }
 
-    let a = StructA {
-        a: 1,
-        b: 2,
-        msg: String::from("hello world"),
+    let s20 = MyStruct {
+        s20: S20::from(String::from("hello world")),
     };
-    let ser = vin::to_string(&a).unwrap();
-    let de: StructA = vin::from_str(ser.as_str()).unwrap();
-    assert_eq!(de, a)
+    let ser = vin::to_string(&s20).unwrap();
+    println!("{:?}", ser);
+    let der: MyStruct = vin::from_str(ser.as_str()).unwrap();
+    println!("{:?}", der);
 }
