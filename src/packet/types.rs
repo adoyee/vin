@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use crate::packet::error;
+use crate::serde::gbk;
 
 #[repr(C)]
 #[derive(Debug, Serialize, Deserialize)]
@@ -17,13 +18,25 @@ pub struct Time {
 #[derive(Debug, Serialize_repr, Deserialize_repr)]
 #[repr(u8)]
 pub enum Encrypt {
-    Plain = 0x01,
+    None = 0x01,
     Rsa = 0x02,
     Aes128 = 0x03,
 }
 
-pub type Result<T> = std::result::Result<T, error::Error>;
+pub struct VinOpts {}
 
-pub trait Parser {
-    fn parse<P>(buff: &[u8]) -> Result<P>;
+impl gbk::Options for VinOpts {
+    const LENGTH: usize = 17;
 }
+
+pub type Vin = gbk::GBKString<VinOpts>;
+
+pub struct IccidOpts {}
+
+impl gbk::Options for IccidOpts {
+    const LENGTH: usize = 20;
+}
+
+pub type Iccid = gbk::GBKString<IccidOpts>;
+
+pub mod info {}

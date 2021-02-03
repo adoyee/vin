@@ -1,8 +1,15 @@
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
+use error::{Error, Result};
+pub use types::Encrypt;
+pub use types::Iccid;
+pub use types::Time;
+pub use types::Vin;
+
 pub mod body;
 pub mod error;
+pub mod parser;
 pub mod types;
 
 #[derive(Debug, Serialize_repr, Deserialize_repr)]
@@ -23,17 +30,31 @@ pub enum Command {
 pub enum Response {
     Success,
     Fail,
-    RepeatedVin,
+    DupVin,
+    Command = 0xFE,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct Packet {
     pub begin: u16,
     pub command: Command,
     pub response: Response,
-    pub vin: String,
-    pub encrypt: types::Encrypt,
+    pub vin: Vin,
+    pub encrypt: Encrypt,
     pub body_len: u16,
-    pub body: body::Body,
+    pub body: Box<dyn body::Body>,
     pub bcc: u8,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct MyCommand(u8);
+
+#[derive(Debug, Deserialize)]
+pub struct Header {
+    pub begin: u16,
+    pub command: MyCommand,
+    pub response: Response,
+    pub vin: Vin,
+    pub encrypt: Encrypt,
+    pub body_len: u16,
 }

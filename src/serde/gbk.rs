@@ -10,7 +10,6 @@ pub trait Options {
     const LENGTH: usize;
 }
 
-#[derive(Debug)]
 pub struct GBKString<O> {
     pub message: String,
     _marker: PhantomData<O>,
@@ -103,5 +102,17 @@ where
             .decode(buff.as_slice(), DecoderTrap::Strict)
             .unwrap();
         Ok(GBKString::from(message))
+    }
+}
+
+impl<O: Options> fmt::Display for GBKString<O> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+
+impl<O: Options> fmt::Debug for GBKString<O> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.message)
     }
 }

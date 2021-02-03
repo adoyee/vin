@@ -23,14 +23,24 @@ pub struct Deserializer<R: Read> {
 }
 
 impl<R: Read> Deserializer<R> {
-    fn deserialize_u8(&mut self) -> Result<u8> {
+    pub fn new(read: R) -> Self {
+        Self { reader: read }
+    }
+    pub fn deserialize_u8(&mut self) -> Result<u8> {
         self.reader.read_u8().map_err(Error::from)
     }
-    fn deserialize_u16(&mut self) -> Result<u16> {
+    pub fn deserialize_u16(&mut self) -> Result<u16> {
         self.reader.read_u16::<BigEndian>().map_err(Error::from)
     }
-    fn deserialize_u32(&mut self) -> Result<u32> {
+    pub fn deserialize_u32(&mut self) -> Result<u32> {
         self.reader.read_u32::<BigEndian>().map_err(Error::from)
+    }
+
+    pub fn read_bytes(&mut self, len: usize) -> Result<Vec<u8>> {
+        let mut buff: Vec<u8> = Vec::with_capacity(len);
+        buff.resize(len, 0);
+        self.reader.read_exact(buff.as_mut_slice())?;
+        Ok(buff)
     }
 
     fn read_until_string_end(&mut self) -> Result<Vec<u8>> {
@@ -124,6 +134,14 @@ impl<'de, 'a, R: Read> de::Deserializer<'de> for &'a mut Deserializer<R> {
         }
     }
 
+    fn deserialize_newtype_struct<V: de::Visitor<'de>>(
+        self,
+        _name: &'static str,
+        visitor: V,
+    ) -> Result<V::Value> {
+        visitor.visit_newtype_struct(self)
+    }
+
     fn deserialize_seq<V>(self, visitor: V) -> Result<V::Value>
     where
         V: serde::de::Visitor<'de>,
@@ -185,23 +203,6 @@ impl<'de, 'a, R: Read> de::Deserializer<'de> for &'a mut Deserializer<R> {
     where
         V: serde::de::Visitor<'de>,
     {
-        // impl<'de, 'a, R: Read> de::EnumAccess<'de> for &'a mut Deserializer<R>
-        // where
-        //     R: Read,
-        // {
-        //     type Error = Error;
-        //     type Variant = Self;
-        //
-        //     fn variant_seed<V>(self, seed: V) -> Result<(V::Value, Self::Variant)>
-        //     where
-        //         V: serde::de::DeserializeSeed<'de>,
-        //     {
-        //         let value = de::DeserializeSeed::deserialize(seed, &mut *self)?;
-        //         Ok((value, self))
-        //     }
-        // }
-        //
-        // visitor.visit_enum(self)
         Err(Error::Unsupported)
     }
 
@@ -220,13 +221,11 @@ impl<'de, 'a, R: Read> de::Deserializer<'de> for &'a mut Deserializer<R> {
     deserialize_unsupported!(deserialize_bool);
     deserialize_unsupported!(deserialize_char);
     deserialize_unsupported!(deserialize_unit);
-    // deserialize_unsupported!(deserialize_seq);
     deserialize_unsupported!(deserialize_map);
     deserialize_unsupported!(deserialize_ignored_any);
     deserialize_unsupported!(deserialize_identifier);
 
     deserialize_unsupported_3!(deserialize_unit_struct);
-    deserialize_unsupported_3!(deserialize_newtype_struct);
     deserialize_unsupported_4!(deserialize_tuple_struct);
 }
 
