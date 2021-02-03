@@ -1,10 +1,10 @@
-use crate::serde::error::Error::GBK;
+use std::fmt;
+use std::marker::PhantomData;
+
 use encoding::all::GB18030;
 use encoding::{DecoderTrap, EncoderTrap, Encoding};
 use serde::de::{SeqAccess, Visitor};
 use serde::{Deserializer, Serializer};
-use std::fmt;
-use std::marker::PhantomData;
 
 pub trait Options {
     const LENGTH: usize;

@@ -1,10 +1,11 @@
 use std::io::Write;
 
-use crate::serde::gbk;
 use byteorder::{BigEndian, WriteBytesExt};
 use encoding::all::GBK;
 use encoding::{EncoderTrap, Encoding};
 use serde::ser::{self, Impossible, Serialize};
+
+use crate::serde::gbk;
 
 use super::error::{Error, Result};
 

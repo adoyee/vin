@@ -1,13 +1,12 @@
 use std::io::Read;
 
-use crate::serde::gbk;
 use byteorder::{BigEndian, ReadBytesExt};
 use encoding::all::GBK;
 use encoding::{DecoderTrap, Encoding};
 use serde::{de, Deserialize};
 
 use crate::serde::error::{Error, Result};
-use serde::de::DeserializeSeed;
+use crate::serde::gbk;
 
 pub fn from_str<'de, T: de::Deserialize<'de>>(s: &str) -> Result<T> {
     let buff = hex::decode(s).map_err(Error::from)?;
